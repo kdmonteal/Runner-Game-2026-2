@@ -11,9 +11,9 @@ import * as THREE from 'three';
 const CONFIG = {
     GRAVEDAD: -32,
     VEL_CAMINAR: 6,
-    VEL_CORRER:9,
+    VEL_CORRER: 9,
     ACELERACION: 40,
-    FRICCION:30,
+    FRICCION: 30,
     FUERZA_SALTO: 15,
     CORTE_SALTO: 0.45,
     VEL_MAX_CAIDA: -20,
@@ -40,14 +40,14 @@ const CONFIG = {
     F Bandera de Meta
 ***************************************************** */
 const MAPA_NIVEL = [
-  "                                                                                ",
-  "                                      ooo                                       ",
-  "         G             ooo           ooooo                                      ",
-  "                      BBBBB         ooooooo                                   F ",
-  "                                      BBB                   S                 # ",
-  "    P    G   G                       E                     SS                 # ",
-  "   ###  #######  #   K   #  ##C##   #####   ##B#B##       SSS                ###",
-  "################ ################ ################ ################ ################",
+    "                                                                                ",
+    "                                      ooo                                       ",
+    "   #      G             ooo           ooooo                                      ",
+    "   #                   BBBBB         ooooooo                                   F ",
+    "   #                                   BBB                   S                 # ",
+    "   # P    G   G                       E                     SS                 # ",
+    "   ###  #######  #   K   #  ##C##   #####   ##B#B##       SSS                ###",
+    "################ ################ ################ ################ ################",
 ];
 
 const SOLIDOS = new Set(["#", "B", "G", "S", "C", "K", "F"]);
@@ -58,16 +58,20 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLOR_CIELO);
 // FOG
 scene.fog = new THREE.Fog(COLOR_CIELO, 25, 60);
-const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 200 );
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(5, 5, 14);
 
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setPixelRatio( window.devicePixelRatio );
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setAnimationLoop( animate );
-document.body.appendChild( renderer.domElement );
+renderer.setAnimationLoop(animate);
+document.body.appendChild(renderer.domElement);
+
+const light = new THREE.AmbientLight( 0x404040, 50); // soft white light
+scene.add( light );
+
 
 window.addEventListener('resize', () => {
     // 1. Actualizar el tamaño del renderizador
@@ -75,7 +79,7 @@ window.addEventListener('resize', () => {
 
     // 2. Actualizar la relación de aspecto de la cámara
     camera.aspect = window.innerWidth / window.innerHeight;
-    
+
     // 3. Renderizar los cambios en la matriz de proyección
     camera.updateProjectionMatrix();
 });
@@ -83,27 +87,103 @@ window.addEventListener('resize', () => {
 
 /* Diseño del nivel (TILEMAP) */
 /* ************************************************** */
-    let grupoNivel = null,
-        bloques = new Map(),
-        gemas = [],
-        enemigos = [],
-        particulas = [],
-        posicionInicial = {x: 2.5, y:1},
-        puntoControl = null,
-        banderaMeta = null;
+let grupoNivel = null,
+    bloques = new Map(),
+    gemas = [],
+    enemigos = [],
+    particulas = [],
+    posicionInicial = { x: 2.5, y: 1 },
+    puntoControl = null,
+    banderaMeta = null;
 /* ************************************************** */
 
+const clave = (x, y) => x + "," + y;
 
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
+function construirNivel() {
+    // Eliminar el grupo de nivel anterior
+    if (grupoNivel) scene.remove(grupoNivel);
 
-function animate( time ) {
+    grupoNivel = new THREE.Group();
+    scene.add(grupoNivel);
 
-  cube.rotation.x = time / 2000;
-  cube.rotation.y = time / 1000;
+    bloques = new Map();
+    gemas = [];
+    enemigos = [];
+    particulas = [];
 
-  renderer.render( scene, camera );
+    const alto = MAPA_NIVEL.length;
+    MAPA_NIVEL.forEach((fila, y) => {
+        const yMundo = alto - 1 - y; // Invertir el eje Y para que (0,0) esté en la esquina inferior izquierda
+
+        for (let index = 0; index < fila.length; index++) {
+            const element = fila[index];
+
+            if (SOLIDOS.has(element)) {
+                // Crear un bloque sólido
+                crearBloque(index, yMundo, element);
+            }
+        }
+
+    })
+}
+
+// 1. Crear el cargador de texturas
+const textureLoader = new THREE.TextureLoader();
+// 2. Cargar la imagen especificando su ruta (local o URL externa)
+const texTierra = textureLoader.load('./src/img/texture/ground.jpg');
+const texSuelo = textureLoader.load('./src/img/texture/pasto.jpg');
+const texLadrillo = textureLoader.load('./src/img/texture/ladrillo.jpg');
+
+// CREAR EL MATERIAL
+const MATERIALES = {
+    suelo: new THREE.MeshLambertMaterial({map: texSuelo}), 
+    tierra: new THREE.MeshLambertMaterial({map: texTierra}), 
+    ladrillo: new THREE.MeshLambertMaterial({map: texLadrillo}),    
+}
+
+const GEO_BLOQUE = new THREE.BoxGeometry(1,1,1);
+const GEO_GEMA = new THREE.OctahedronGeometry(0.28);
+
+// sorpresa: ,
+//     piedra: ,
+//     columna: , 
+//     gema: 
+function crearBloque(x,y,tipo) {
+    // Seleccionar el material que se le va a colocar al bloque
+
+    const material = {
+        "#": MATERIALES.suelo,
+        "B": MATERIALES.ladrillo
+    }[tipo];
+
+    const malla = new THREE.Mesh(GEO_BLOQUE,material);
+
+    malla.position.set(x+0.5,y+0.5,0);
+    grupoNivel.add(malla);
+    bloques.set(clave(x,y), {x,y,tipo, malla, rebote:0});
+
+    if(tipo==="#"){
+        const tierra = new THREE.Mesh(new THREE.BoxGeometry(1,4,1),MATERIALES.tierra);
+        tierra.position.set(x+0.5,y-2,0);
+        grupoNivel.add(tierra);
+    }
+
+}
+
+
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshLambertMaterial({
+    map: texSuelo
+});
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+function animate(time) {
+
+    cube.rotation.x = time / 2000;
+    cube.rotation.y = time / 1000;
+
+    construirNivel();
+    renderer.render(scene, camera);
 
 }

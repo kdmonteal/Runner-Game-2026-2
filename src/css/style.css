@@ -20,6 +20,7 @@ html, body {
     overflow: hidden;
     background: var(--color-background-general);
     font-family: var(--fuente);
+    color: var(--color-texto);
 }
 
 /* Pantalla (Inicio, Pausa, Fin) */
@@ -77,4 +78,13 @@ button:hover {
 button:active {
     transform: translateY(2px);
     box-shadow: 0 2px 0 var(--color-boton-sombra);
+}
+
+.subtitulo {
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.oculto {
+    display: none !important;
 }

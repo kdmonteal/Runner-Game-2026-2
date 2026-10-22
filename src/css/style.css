@@ -45,6 +45,7 @@ html, body {
     padding: 8px 12px;
     border-radius: 8px;
     pointer-events: auto;
+    text-align: center;
 }
 
 

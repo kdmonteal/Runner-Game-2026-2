@@ -1,0 +1,23 @@
+:root {
+    --color-texto: #fff;
+    --color-acento: #ffd23f;
+    --color-boton: #ff595e;
+    --color-boton-sombra: #a8323a;
+    --fondo-pantalla: #393939;
+    --color-background-general: #6ec6ff;
+    --fuente: 'Poppins', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--color-background-general);
+    font-family: var(--fuente);
+}

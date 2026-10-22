@@ -1,5 +1,5 @@
 :root {
-    --color-texto: #fff;
+    --color-texto: #ffffff;
     --color-acento: #ffd23f;
     --color-boton: #ff595e;
     --color-boton-sombra: #a8323a;
@@ -20,4 +20,26 @@ html, body {
     overflow: hidden;
     background: var(--color-background-general);
     font-family: var(--fuente);
+}
+
+/* Pantalla (Inicio, Pausa, Fin) */
+.pantalla {
+   position: fixed;
+   inset: 0;
+   z-index: 20;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   gap: 24px;
+   padding: 16px;
+   text-align: center;
+   background-color: var(--fondo-pantalla);
+}
+
+.pantalla h1 {
+    font-size: clamp(24px, 6vw, 56px);
+    color: var(--color-acento);
+    text-shadow: 4px 4px 0px #000;
+    line-height: 1.3;
 }

@@ -70,7 +70,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setAnimationLoop(animate);
+// (Quitamos renderer.setAnimationLoop(animate): ya tenemos el bucle propio "bucle()" al final.
+//  Tener dos bucles dibujaba la escena dos veces por cuadro.)
 document.body.appendChild(renderer.domElement);
 
 const light = new THREE.AmbientLight( 0x404040, 50); // soft white light
@@ -125,6 +126,9 @@ function construirNivel() {
             if (SOLIDOS.has(element)) {
                 // Crear un bloque sólido
                 crearBloque(index, yMundo, element);
+            } else if (element === "P") {
+                // Guardar dónde empieza el jugador (+0.5 = centro de la casilla)
+                posicionInicial = { x: index + 0.5, y: yMundo };
             }
         }
 
@@ -244,10 +248,10 @@ function alternarPausa() {
     if(estado === 'jugando'){
         estado = 'pausa';
         ui.pausa.classList.remove('oculto');
-    }else{
+    }else if(estado === 'pausa'){   // solo se reanuda si ESTABA en pausa (no desde 'inicio')
         estado = 'jugando';
         ui.pausa.classList.add('oculto');
-        // modificar el tiempo reloj para que se detenga.
+        reloj.getDelta(); // descartamos el tiempo que pasó en pausa
     }
 }
 
@@ -313,6 +317,79 @@ const jugador ={
 
 scene.add(jugador.malla);
 
+// Ubica al jugador en la "P" del mapa (o en el punto de control si ya se activó)
+function reaparecerJugador() {
+    const inicio = (puntoControl && puntoControl.activo) ? puntoControl : posicionInicial;
+    jugador.x = inicio.x;
+    jugador.y = inicio.y;
+    jugador.vx = 0;
+    jugador.vy = 0;
+    jugador.mirando = 1;
+    jugador.malla.rotation.set(0, 0, 0);
+    jugador.malla.visible = true;
+}
+
+// ********************************************
+// FÍSICA Y COLISIONES (AABB contra la grilla)
+// Movemos primero en X y resolvemos choques, y LUEGO en Y.
+// Toda entidad tiene: x (centro), y (pies), ancho, alto, vx, vy.
+// ********************************************
+function obtenerBloque(tx, ty) {
+    return bloques.get(clave(tx, ty)) || null;
+}
+
+// Devuelve los bloques sólidos que se cruzan con la caja de la entidad
+function bloquesQueToca(ent) {
+    const resultado = [];
+    const izquierda = Math.floor(ent.x - ent.ancho / 2);
+    const derecha = Math.floor(ent.x + ent.ancho / 2 - 0.001);
+    const abajo = Math.floor(ent.y);
+    const arriba = Math.floor(ent.y + ent.alto - 0.001);
+
+    for (let tx = izquierda; tx <= derecha; tx++) {
+        for (let ty = abajo; ty <= arriba; ty++) {
+            const b = obtenerBloque(tx, ty);
+            if (b) resultado.push(b);
+        }
+    }
+    return resultado;
+}
+
+// Mueve la entidad según su velocidad y la saca de los bloques con los que choque
+function moverEntidad(ent, dt, alGolpearTecho) {
+    ent.chocoPared = false;
+
+    // --- Eje X ---
+    ent.x += ent.vx * dt;
+    let choques = bloquesQueToca(ent);
+    if (choques.length > 0) {
+        if (ent.vx > 0) {
+            ent.x = Math.min(...choques.map(b => b.x)) - ent.ancho / 2 - 0.001;
+        } else if (ent.vx < 0) {
+            ent.x = Math.max(...choques.map(b => b.x)) + 1 + ent.ancho / 2 + 0.001;
+        }
+        ent.vx = 0;
+        ent.chocoPared = true;
+    }
+
+    // --- Eje Y ---
+    ent.y += ent.vy * dt;
+    ent.enSuelo = false;
+    choques = bloquesQueToca(ent);
+    if (choques.length > 0) {
+        if (ent.vy < 0) {
+            // Cayendo: aterriza encima del bloque
+            ent.y = Math.max(...choques.map(b => b.y)) + 1;
+            ent.enSuelo = true;
+        } else if (ent.vy > 0) {
+            // Subiendo: se golpea la cabeza
+            ent.y = Math.min(...choques.map(b => b.y)) - ent.alto - 0.001;
+            if (alGolpearTecho) alGolpearTecho(choques);
+        }
+        ent.vy = 0;
+    }
+}
+
 
 function actualizarJugador(dt) {
   const j = jugador;
@@ -343,7 +420,7 @@ function actualizarJugador(dt) {
     j.bufferSalto = 0;
     j.tiempoCoyote = 0;
     j.saltando = true;
-    sonido('salto');
+    //sonido('salto');   // se activa cuando hagamos la sección de sonidos
   }
 
   // Salto variable: si sueltas el botón mientras subes, el salto se corta
@@ -358,7 +435,8 @@ function actualizarJugador(dt) {
   j.vy = Math.max(j.vy, CONFIG.VEL_MAX_CAIDA);
 
   // --- Mover y resolver colisiones ---
-  //moverEntidad(j, dt, golpearBloque);
+  // (golpearBloque se agrega cuando hagamos la sección de romper bloques)
+  moverEntidad(j, dt);
 
   // No dejar que salga por el borde izquierdo del mundo
   if (j.x < j.ancho / 2) { j.x = j.ancho / 2; j.vx = 0; }
@@ -366,6 +444,7 @@ function actualizarJugador(dt) {
   // --- ¿Se cayó al vacío? ---
   if (j.y < CONFIG.LIMITE_CAIDA) {
     //perderVida(false);
+    reaparecerJugador();   // provisional: mientras no hay vidas, vuelve al inicio
     return;
   }
 
@@ -477,7 +556,8 @@ window.addEventListener('keydown', (e) => {
 
     if(e.code === 'KeyP') alternarPausa();
     if(e.code === 'KeyR' && estado!=='inicio') iniciarJuego();
-    if(e.code === 'Enter' && (estado==='inicio') || (estado==='gameover') || (estado==='victoria')) iniciarJuego();
+    // Ojo con los paréntesis: el || debe quedar DENTRO, si no, cualquier tecla reinicia en gameover
+    if(e.code === 'Enter' && (estado==='inicio' || estado==='gameover' || estado==='victoria')) iniciarJuego();
 
 });
 
@@ -515,26 +595,32 @@ function iniciarJuego() {
 
     // Construir el nivel UNA sola vez (no dentro de animate, que corre 60 veces por segundo)
     construirNivel();
-
+    reaparecerJugador();               // ubicar al jugador en la "P"
     camera.position.set(8, 4.5, 14);
 
     ui.inicio.classList.add('oculto');
     ui.fin.classList.add('oculto');
     ui.pausa.classList.add('oculto');
 
-    estado = 'jugando';
+    estado = 'jugando';                // ← sin esto, el bucle nunca actualiza al jugador
 }
 
-function reaparecerJugador() {
-    const inicio = (puntoControl && puntoControl.activo) ? puntoControl: posicionInicial;
-    jugador.x = inicio.x;
-    jugador.y = inicio.y;
-    jugador.vx = 0;
-    jugador.vy = 0;
-    jugador.mirando = 1;
-    jugador.malla.rotation.set(0,0,0);
-    jugador.malla.visible = true;
+// ********************************************
+// CÁMARA QUE SIGUE AL JUGADOR
+// Interpolación (lerp): en cada cuadro la cámara recorre un porcentaje
+// de la distancia hacia su objetivo → movimiento suave.
+// ********************************************
+function actualizarCamara(dt) {
+    const suavizado = Math.min(1, 5 * dt);
+    const objetivoX = Math.max(8, jugador.x + 2);   // un poco adelante del jugador
+    const objetivoY = Math.max(4.5, jugador.y + 3);
+
+    camera.position.x += (objetivoX - camera.position.x) * suavizado;
+    camera.position.y += (objetivoY - camera.position.y) * suavizado;
+    camera.position.z = 14;
+    camera.lookAt(camera.position.x, camera.position.y - 2, 0);
 }
+
 // ---------- Bucle principal (game loop) ----------
 // requestAnimationFrame llama a esta función ~60 veces por segundo.
 // dt (delta time) = segundos desde el cuadro anterior. Multiplicar las
@@ -550,7 +636,7 @@ function bucle() {
     actualizarJugador(dt);
     //actualizarEnemigos(dt);
     tiempoRestante -= dt;
-    if (tiempoRestante <= 0) { tiempoRestante = 0; perderVida(true); }
+    if (tiempoRestante <= 0) { tiempoRestante = 0; /* perderVida(true); */ }
   } else if (estado === 'muriendo') {
     //actualizarMuerte(dt);
   }
@@ -560,7 +646,7 @@ function bucle() {
     //animarNivel(dt, tiempo);
   }
   if (estado !== 'inicio') {
-    //actualizarCamara(dt);
+    actualizarCamara(dt);
     //actualizarHUD();
   } else {
     // En la pantalla de inicio la cámara recorre el nivel lentamente
@@ -575,12 +661,8 @@ function bucle() {
 }
 
 
-function animate(time) {
-    renderer.render(scene, camera);
-}
-
 // ARRANQUE DE LA ESCENA
 construirNivel();
-reaparecerJugador();
+reaparecerJugador();           // el jugador aparece en la "P" desde la pantalla de inicio
 actualizarModeloJugador(0);
 bucle();

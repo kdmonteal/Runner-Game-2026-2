@@ -302,6 +302,41 @@ const jugador ={
 
 scene.add(jugador.malla);
 
+// ---------- Enemigo: un "blob" morado con ojos ----------
+function crearModeloEnemigo() {
+  const grupo = new THREE.Group();
+  const matCuerpo = new THREE.MeshLambertMaterial({ color: 0x9b5de5 });
+  const matBlanco = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const matNegro = new THREE.MeshBasicMaterial({ color: 0x111111 });
+
+  const cuerpo = pieza(new THREE.SphereGeometry(0.42, 20, 16), matCuerpo, 0, 0.32, 0);
+  cuerpo.scale.set(1, 0.78, 0.9);     // achatamos la esfera
+  const ojoIzq = pieza(new THREE.SphereGeometry(0.1, 10, 10), matBlanco, -0.14, 0.42, 0.3);
+  const ojoDer = pieza(new THREE.SphereGeometry(0.1, 10, 10), matBlanco, 0.14, 0.42, 0.3);
+  const pupIzq = pieza(new THREE.SphereGeometry(0.05, 8, 8), matNegro, -0.14, 0.42, 0.39);
+  const pupDer = pieza(new THREE.SphereGeometry(0.05, 8, 8), matNegro, 0.14, 0.42, 0.39);
+  // Cejas enojadas
+  const cejaIzq = pieza(new THREE.BoxGeometry(0.16, 0.04, 0.04), matNegro, -0.14, 0.55, 0.33);
+  cejaIzq.rotation.z = -0.4;
+  const cejaDer = pieza(new THREE.BoxGeometry(0.16, 0.04, 0.04), matNegro, 0.14, 0.55, 0.33);
+  cejaDer.rotation.z = 0.4;
+
+  grupo.add(cuerpo, ojoIzq, ojoDer, pupIzq, pupDer, cejaIzq, cejaDer);
+  return grupo;
+}
+
+// ---------- Bandera (meta) y punto de control ----------
+function crearBandera(alto, colorTela) {
+  const grupo = new THREE.Group();
+  const matPoste = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+  const matTela = new THREE.MeshLambertMaterial({ color: colorTela, side: THREE.DoubleSide });
+  grupo.add(pieza(new THREE.CylinderGeometry(0.06, 0.06, alto), matPoste, 0, alto / 2, 0));
+  grupo.add(pieza(new THREE.SphereGeometry(0.14, 12, 12), MATERIALES.sorpresa, 0, alto + 0.1, 0));
+  const tela = pieza(new THREE.BoxGeometry(0.9, 0.6, 0.04), matTela, -0.48, alto - 0.4, 0);
+  grupo.add(tela);
+  grupo.userData.tela = tela;
+  return grupo;
+}
 
 // ********************************************
 // Variables de juego

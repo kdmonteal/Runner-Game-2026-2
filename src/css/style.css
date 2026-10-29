@@ -1,137 +1,161 @@
+/* =====================================================================
+   PIXEL RUN 3D — Hoja de estilos
+   Aquí solo controlamos la INTERFAZ (HUD y menús). El mundo 3D lo
+   dibuja Three.js dentro de un <canvas> que crea game.js.
+   ===================================================================== */
+
+/* ---------- Variables CSS: un solo lugar para cambiar los colores ---------- */
 :root {
-    --color-texto: #ffffff;
-    --color-acento: #ffd23f;
-    --color-boton: #ff595e;
-    --color-boton-sombra: #a8323a;
-    --fondo-pantalla: #393939;
-    --color-background-general: #6ec6ff;
-    --fuente: 'Poppins', sans-serif;
+  --color-texto: #ffffff;
+  --color-acento: #ffd23f;     /* amarillo de los títulos */
+  --color-boton: #ff595e;      /* rojo de los botones */
+  --color-boton-sombra: #a8323a;
+  --fondo-pantalla: rgba(20, 24, 48, 0.82);
+  --fuente: 'Press Start 2P', monospace;
 }
 
+/* ---------- Reset básico ---------- */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;   /* el ancho incluye padding y borde */
 }
 
 html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: var(--color-background-general);
-    font-family: var(--fuente);
-    color: var(--color-texto);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;         /* sin barras de scroll: el juego ocupa toda la ventana */
+  background: #6ec6ff;      /* mismo color del cielo mientras carga */
+  font-family: var(--fuente);
+  color: var(--color-texto);
+  user-select: none;        /* evita seleccionar texto al hacer clic rápido */
 }
 
-/*HUD*/
+/* El canvas que crea Three.js se pega al fondo de la página */
+canvas {
+  display: block;
+  position: fixed;
+  inset: 0;
+}
+
+/* ---------- HUD: barra superior con vidas, gemas, puntos y tiempo ---------- */
 #hud {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    right: 16px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    z-index: 10;
-    pointer-events: none;
-    font-size: 18px;
-    text-shadow: 1px 1px 0px #000;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;                    /* elementos en fila */
+  justify-content: space-between;   /* repartidos a lo ancho */
+  flex-wrap: wrap;
+  gap: 12px;
+  z-index: 10;                      /* por encima del canvas */
+  pointer-events: none;             /* los clics "atraviesan" el HUD */
+  font-size: 14px;
+  text-shadow: 3px 3px 0 #000;      /* sombra dura = look retro */
 }
 
-.hud-item span{
-    display: block;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 8px 12px;
-    border-radius: 8px;
-    pointer-events: auto;
-    text-align: center;
+.hud-item span {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-acento);
 }
 
+/* ---------- Aviso central temporal ---------- */
+#aviso {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  font-size: 18px;
+  color: var(--color-acento);
+  text-shadow: 3px 3px 0 #000;
+  pointer-events: none;
+  animation: aparecer 0.3s ease-out;
+}
 
-/* Pantalla (Inicio, Pausa, Fin) */
+/* ---------- Pantallas (inicio, pausa, fin) ---------- */
 .pantalla {
-   position: fixed;
-   inset: 0;
-   z-index: 20;
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-   justify-content: center;
-   gap: 24px;
-   padding: 16px;
-   text-align: center;
-   background-color: var(--fondo-pantalla);
+  position: fixed;
+  inset: 0;                         /* top/right/bottom/left = 0 → cubre todo */
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px;
+  text-align: center;
+  background: var(--fondo-pantalla);
 }
 
 .pantalla h1 {
-    font-size: clamp(24px, 6vw, 56px);
-    color: var(--color-acento);
-    text-shadow: 4px 4px 0px #000;
-    line-height: 1.3;
-}
-.acento {
-    color: var(--color-boton);
+  font-size: clamp(24px, 6vw, 56px);   /* tamaño que se adapta a la pantalla */
+  color: var(--color-acento);
+  text-shadow: 5px 5px 0 #000;
+  line-height: 1.3;
 }
 
-.pista{
-    max-width: 560px;
-    font-size: 15px;
-    line-height: 1.3;
-    opacity: 0.8;
-    color: var(--color-texto);
-}
-
-/* Botón de Jugar */
-button {
-    padding: 12px 24px;
-    font-size: 18px;
-    font-weight: bold;
-    color: var(--color-texto);
-    background-color: var(--color-boton);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 0 var(--color-boton-sombra);
-    transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 var(--color-boton-sombra);
-}
-
-button:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 var(--color-boton-sombra);
-}
+.acento { color: var(--color-boton); }
 
 .subtitulo {
-    font-size: 14px;
-    line-height: 1.8;
+  font-size: 14px;
+  line-height: 1.8;
 }
 
-.oculto {
-    display: none !important;
+.controles {
+  font-size: 11px;
+  line-height: 2.6;
 }
 
-/* Aviso central temporal (¡Punto de control!, ¡Vida extra!) */
-#aviso {
-    position: fixed;
-    top: 22%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 15;
-    font-size: 28px;
-    font-weight: bold;
-    color: var(--color-acento);
-    text-shadow: 3px 3px 0px #000;
-    pointer-events: none;
+.pista {
+  max-width: 560px;
+  font-size: 10px;
+  line-height: 2;
+  opacity: 0.85;
 }
 
-/* Botón deshabilitado mientras cargan las texturas */
-button:disabled {
-    opacity: 0.6;
-    cursor: wait;
-    transform: none;
+/* Teclas dibujadas como "botoncitos" */
+kbd {
+  display: inline-block;
+  min-width: 28px;
+  padding: 4px 6px;
+  margin: 0 2px;
+  font-family: var(--fuente);
+  font-size: 10px;
+  color: #1b2a41;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 3px 0 #9aa5b1;
+}
+
+/* ---------- Botones ---------- */
+button {
+  font-family: var(--fuente);
+  font-size: 16px;
+  padding: 16px 28px;
+  color: #fff;
+  background: var(--color-boton);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--color-boton-sombra);
+  transition: transform 0.1s;
+}
+
+button:hover  { transform: translateY(-2px); }
+button:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--color-boton-sombra); }
+
+/* Clase utilitaria: esconder cualquier elemento */
+.oculto { display: none !important; }
+
+/* Animación de entrada del aviso */
+@keyframes aparecer {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* En pantallas pequeñas el HUD se reduce */
+@media (max-width: 600px) {
+  #hud { font-size: 10px; }
 }

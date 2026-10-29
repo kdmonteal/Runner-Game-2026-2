@@ -51,7 +51,10 @@ const MAPA_NIVEL = [
   "#########################  #############################   ######################  ###########################",
 ];
 
-const SOLIDOS = new Set(["#", "B", "G", "S", "C", "K", "F"]);
+// Caracteres sólidos (el jugador choca con ellos).
+// K y F NO van aquí: el jugador debe atravesarlos para activarlos.
+// U = bloque sorpresa ya usado (aparece cuando se golpea una G).
+const SOLIDOS = new Set(["#", "B", "G", "S", "C", "U"]);
 
 const COLOR_CIELO = 0x6ec6ff;
 
@@ -134,7 +137,22 @@ const textureLoader = new THREE.TextureLoader();
 const texTierra = textureLoader.load('./src/img/texture/ground.jpg');
 const texSuelo = textureLoader.load('./src/img/texture/pasto.jpg');
 const texLadrillo = textureLoader.load('./src/img/texture/ladrillo.jpg');
+// Tierra de relleno: la caja mide 1x4, así que repetimos la imagen 4 veces en vertical
+const texTierraRelleno = textureLoader.load('./src/img/texture/ground.jpg');
+texTierraRelleno.wrapS = THREE.RepeatWrapping;
+texTierraRelleno.wrapT = THREE.RepeatWrapping;
+texTierraRelleno.repeat.set(1, 4);
+const texSueloLado = textureLoader.load('./src/img/texture/suelo-lado.jpg');  // lados del suelo (ground + borde de pasto)
+const texSorpresa  = textureLoader.load('./src/img/texture/sorpresa.jpg');
+const texUsado     = textureLoader.load('./src/img/texture/usado.jpg');
+const texPiedra    = textureLoader.load('./src/img/texture/piedra.jpg');
+const texColumna   = textureLoader.load('./src/img/texture/columna.jpg');
 
+// Indicar que las imágenes están en sRGB (si no, los colores se ven lavados)
+[texTierra, texSuelo, texLadrillo, texTierraRelleno, texSueloLado,
+ texSorpresa, texUsado, texPiedra, texColumna].forEach(tex => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+});
 
 
 // CREAR LOS MATERIALES
@@ -162,33 +180,41 @@ const MATERIALES = {
     gema:     new THREE.MeshPhongMaterial({ color: 0x26c6da, emissive: 0x0b5560, shininess: 100 }),
 };
 
-const GEO_BLOQUE = new THREE.BoxGeometry(1,1,1);
+// Reutilizamos UNA sola geometría para todos los bloques (ahorra memoria)
+const GEO_BLOQUE = new THREE.BoxGeometry(1, 1, 1);
+const GEO_TIERRA = new THREE.BoxGeometry(1, 4, 1);
 const GEO_GEMA = new THREE.OctahedronGeometry(0.28);
 
 // sorpresa: ,
 //     piedra: ,
 //     columna: , 
 //     gema: 
-function crearBloque(x,y,tipo) {
-    // Seleccionar el material que se le va a colocar al bloque
-
+function crearBloque(x, y, tipo) {
+    // Seleccionar el material que se le va a colocar al bloque según su tipo
     const material = {
         "#": MATERIALES.suelo,
-        "B": MATERIALES.ladrillo
+        "B": MATERIALES.ladrillo,
+        "G": MATERIALES.sorpresa,
+        "S": MATERIALES.piedra,
+        "C": MATERIALES.columna,
+        "U": MATERIALES.usado,
     }[tipo];
 
-    const malla = new THREE.Mesh(GEO_BLOQUE,material);
-
-    malla.position.set(x+0.5,y+0.5,0);
+    const malla = new THREE.Mesh(GEO_BLOQUE, material);
+    // +0.5 porque el cubo se ubica desde su centro, pero la casilla va de x a x+1
+    malla.position.set(x + 0.5, y + 0.5, 0);
+    malla.castShadow = true;
+    malla.receiveShadow = true;
     grupoNivel.add(malla);
-    bloques.set(clave(x,y), {x,y,tipo, malla, rebote:0});
+    bloques.set(clave(x, y), { x, y, tipo, malla, rebote: 0 });
 
-    if(tipo==="#"){
-        const tierra = new THREE.Mesh(new THREE.BoxGeometry(1,4,1),MATERIALES.tierra);
-        tierra.position.set(x+0.5,y-2,0);
+    // Debajo de cada bloque de suelo agregamos tierra (solo decorativa, sin colisión)
+    if (tipo === "#") {
+        const tierra = new THREE.Mesh(GEO_TIERRA, MATERIALES.tierra);
+        tierra.position.set(x + 0.5, y - 2, 0);
+        tierra.receiveShadow = true;
         grupoNivel.add(tierra);
     }
-
 }
 
 
@@ -199,12 +225,14 @@ const material = new THREE.MeshLambertMaterial({
 const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
+// Construir el nivel UNA sola vez (no dentro de animate, que corre 60 veces por segundo)
+construirNivel();
+
 function animate(time) {
 
     cube.rotation.x = time / 2000;
     cube.rotation.y = time / 1000;
 
-    construirNivel();
     renderer.render(scene, camera);
 
 }

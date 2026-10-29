@@ -239,12 +239,36 @@ const ui = {
 document.getElementById("btn-jugar").addEventListener('click', iniciarJuego);
 document.getElementById("btn-reiniciar").addEventListener('click', iniciarJuego);
 
+// ********************************************
+// Variables de juego
+// ESTADO DE JUEGO Y EL BUCLE
+// ********************************************
+let estado = 'inicio',
+    vidas,
+    puntos,
+    gemasRecogidas,
+    tiempoRestante,
+    tiempoMuerte;
+
 function iniciarJuego() {
-    alert("inicio el juego");
+    // Creación de audio
+
+    vidas = CONFIG.VIDAS_INICIALES;
+    puntos = 0;
+    //gemasRecogidas = 0;
+    tiempoRestante = CONFIG.TIEMPO_NIVEL;
+    puntoControl = null;
+    banderaMeta = null;
+
+    // Construir el nivel UNA sola vez (no dentro de animate, que corre 60 veces por segundo)
+    construirNivel();
+
+    ui.inicio.classList.add('oculto');
+    ui.fin.classList.add('oculto');
+    ui.pausa.classList.add('oculto');
 }
 
-// Construir el nivel UNA sola vez (no dentro de animate, que corre 60 veces por segundo)
-construirNivel();
+
 
 function animate(time) {
     renderer.render(scene, camera);

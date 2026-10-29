@@ -358,38 +358,38 @@ function actualizarJugador(dt) {
   j.vy = Math.max(j.vy, CONFIG.VEL_MAX_CAIDA);
 
   // --- Mover y resolver colisiones ---
-  moverEntidad(j, dt, golpearBloque);
+  //moverEntidad(j, dt, golpearBloque);
 
   // No dejar que salga por el borde izquierdo del mundo
   if (j.x < j.ancho / 2) { j.x = j.ancho / 2; j.vx = 0; }
 
   // --- ¿Se cayó al vacío? ---
   if (j.y < CONFIG.LIMITE_CAIDA) {
-    perderVida(false);
+    //perderVida(false);
     return;
   }
 
   // --- Recoger gemas ---
-  gemas.forEach(g => {
-    if (!g.recogida && seSuperponen(j, { x: g.x + 0.5, y: g.y + 0.15, ancho: 0.6, alto: 0.7 })) {
-      g.recogida = true;
-      grupoNivel.remove(g.malla);
-      sumarGema(100);
-    }
-  });
+//   gemas.forEach(g => {
+//     if (!g.recogida && seSuperponen(j, { x: g.x + 0.5, y: g.y + 0.15, ancho: 0.6, alto: 0.7 })) {
+//       g.recogida = true;
+//       grupoNivel.remove(g.malla);
+//       sumarGema(100);
+//     }
+//   });
 
   // --- Punto de control ---
   if (puntoControl && !puntoControl.activo && j.x >= puntoControl.x) {
     puntoControl.activo = true;
     puntoControl.bandera.userData.tela.material.color.set(0x4caf50); // se pone verde
     mostrarAviso('¡PUNTO DE CONTROL!');
-    sonido('vida');
+    //sonido('vida');
   }
 
   // --- Meta ---
-  if (meta && j.x >= meta.x - 0.2) {
-    ganarNivel();
-  }
+//   if (meta && j.x >= meta.x - 0.2) {
+//     ganarNivel();
+//   }
 
   if (j.invulnerable > 0) j.invulnerable -= dt;
   actualizarModeloJugador(dt);
@@ -521,9 +521,21 @@ function iniciarJuego() {
     ui.pausa.classList.add('oculto');
 }
 
+/**************************** 
+ Game Loop 
+ **************************** */
 
+const reloj = new THREE.Clock();
+
+function bucle() {
+    requestAnimationFrame(bucle);
+        
+}
+
+bucle();
 
 function animate(time) {
     renderer.render(scene, camera);
 
 }
+

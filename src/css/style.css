@@ -114,3 +114,24 @@ button:active {
 .oculto {
     display: none !important;
 }
+
+/* Aviso central temporal (¡Punto de control!, ¡Vida extra!) */
+#aviso {
+    position: fixed;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--color-acento);
+    text-shadow: 3px 3px 0px #000;
+    pointer-events: none;
+}
+
+/* Botón deshabilitado mientras cargan las texturas */
+button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
+}

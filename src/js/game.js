@@ -239,6 +239,70 @@ const ui = {
 document.getElementById("btn-jugar").addEventListener('click', iniciarJuego);
 document.getElementById("btn-reiniciar").addEventListener('click', iniciarJuego);
 
+
+// ********************************************
+// Personaje
+// ********************************************
+//Crear malla y ubicarlas
+function pieza(geometria, material, x, y, z) {
+    const malla = new THREE.Mesh(geometria,material);
+    malla.position.set(x,y,z);
+    malla.castShadow = true;
+    return malla;
+}
+
+function crearModeloJugador() {
+    const grupo = new THREE.Group();
+    const matCuerpo = new THREE.MeshLambertMaterial({color: 0x2ec4b6});
+    const matOscuro = new THREE.MeshLambertMaterial({color: 0x1b2a41});
+    const matLuz = new THREE.MeshLambertMaterial({color: 0xffd23f, emissive:0x664400});
+    const matOjo = new THREE.MeshBasicMaterial({color: 0x7df9ff});
+
+    // Piernas
+    const piernaIzq = pieza(new THREE.BoxGeometry(0.16,0.2,0.22), matOscuro, -0.14, 0.1, 0);
+    const piernaDer = pieza(new THREE.BoxGeometry(0.16,0.2,0.22), matOscuro, 0.14, 0.1, 0);
+    // Cuerpo
+    const cuerpo = pieza(new THREE.BoxGeometry(0.6,0.4,0.48), matCuerpo, 0,0.4,0);
+    // Cabeza
+    const cabeza = pieza(new THREE.BoxGeometry(0.56,0.34,0.5), matCuerpo, 0,0.77,0);
+    const visor = pieza(new THREE.BoxGeometry(0.46,0.2,0.04), matOscuro, 0,0.78,0.26);
+    const ojoIzq = pieza(new THREE.BoxGeometry(0.08,0.1,0.02), matOjo, -0.1, 0.79, 0.285);
+    const ojoDerecho = pieza(new THREE.BoxGeometry(0.08,0.1,0.02), matOjo, 0.1, 0.79, 0.285);
+    // Antena
+    const antena = pieza(new THREE.CylinderGeometry(0.025,0.025,0.2), matOscuro, 0, 1.03, 0);
+    const foco = pieza(new THREE.SphereGeometry(0.07,12,12), matLuz, 0, 1.15,0);
+    // Mochila
+    const mochila = pieza(new THREE. BoxGeometry(0.4,0.32,0.14), matLuz,0,0.42,-0.3);
+
+    grupo.add(piernaIzq,piernaDer,cuerpo, cabeza,visor,ojoIzq, ojoDerecho, antena, foco, mochila);
+    grupo.userData = {piernaIzq, piernaDer};
+    return grupo;
+
+}
+
+// ********************************************
+// Jugador
+// ********************************************
+const jugador ={
+    x:0,
+    y:0,
+    vx:0, 
+    vy:0,
+    ancho: 0.7,
+    alto:0.9,
+    enSuelo: false,
+    mirando: 1, // 1=Derecha, -1 = Izquierda
+    tiempoCoyote: 0,
+    bufferSalto: 0,
+    saltando: false,
+    invulnerable: 0,
+    tiempoAnimacion: 0,
+    malla: crearModeloJugador()
+}
+
+scene.add(jugador.malla);
+
+
 // ********************************************
 // Variables de juego
 // ESTADO DE JUEGO Y EL BUCLE
@@ -255,7 +319,7 @@ function iniciarJuego() {
 
     vidas = CONFIG.VIDAS_INICIALES;
     puntos = 0;
-    //gemasRecogidas = 0;
+    gemasRecogidas = 0;
     tiempoRestante = CONFIG.TIEMPO_NIVEL;
     puntoControl = null;
     banderaMeta = null;

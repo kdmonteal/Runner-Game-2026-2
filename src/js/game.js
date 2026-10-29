@@ -370,11 +370,12 @@ window.addEventListener('keydown', (e) => {
 
 window.addEventListener('keyup', (e) => {teclas[e.code] = false;});
 
-const esTeclaSalto =
-const teclaIzquierda = 
-const teclaDerecha=
-const teclaSaltoPresionado = 
-const teclaCorrer = 
+
+const esTeclaSalto = (code) => code === 'Space' || code === 'ArrowUp' || code === 'KeyW';
+const teclaIzquierda = () => teclas['ArrowLeft'] || teclas['KeyA'];
+const teclaDerecha = () => teclas['ArrowRight'] || teclas['KeyD'];
+const teclaSaltoPresionada = () => teclas['Space'] || teclas['ArrowUp'] || teclas['KeyW'];
+const teclaCorrer = () => teclas['ShiftLeft'] || teclas['ShiftRight'];
 
 
 

@@ -516,11 +516,25 @@ function iniciarJuego() {
     // Construir el nivel UNA sola vez (no dentro de animate, que corre 60 veces por segundo)
     construirNivel();
 
+    camera.position.set(8, 4.5, 14);
+
     ui.inicio.classList.add('oculto');
     ui.fin.classList.add('oculto');
     ui.pausa.classList.add('oculto');
+
+    estado = 'jugando';
 }
 
+function reaparecerJugador() {
+    const inicio = (puntoControl && puntoControl.activo) ? puntoControl: posicionInicial;
+    jugador.x = inicio.x;
+    jugador.y = inicio.y;
+    jugador.vx = 0;
+    jugador.vy = 0;
+    jugador.mirando = 1;
+    jugador.malla.rotation.set(0,0,0);
+    jugador.malla.visible = true;
+}
 // ---------- Bucle principal (game loop) ----------
 // requestAnimationFrame llama a esta función ~60 veces por segundo.
 // dt (delta time) = segundos desde el cuadro anterior. Multiplicar las
@@ -567,5 +581,6 @@ function animate(time) {
 
 // ARRANQUE DE LA ESCENA
 construirNivel();
+reaparecerJugador();
 actualizarModeloJugador(0);
 bucle();

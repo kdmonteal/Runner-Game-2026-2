@@ -217,22 +217,36 @@ function crearBloque(x, y, tipo) {
     }
 }
 
+/*   INTERFAZ: HUD Y PANTALLAS 
+ */
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshLambertMaterial({
-    map: texSuelo
-});
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+const ui = {
+    vidas: document.getElementById("hud-vidas"),
+    gemas: document.getElementById("hud-gemas"), 
+    puntos: document.getElementById("hud-puntos"),
+    tiempo: document.getElementById("hud-tiempo"),
+    inicio: document.getElementById("pantalla-inicio"),
+    pausa: document.getElementById("pantalla-pausa"),
+    fin: document.getElementById("pantalla-fin"),
+    finTitulo: document.getElementById("fin-titulo"),
+    finDetalle: document.getElementById("fin-detalle")
+}
+
+// Funcion actualizar HUD
+
+// Temporizador
+
+document.getElementById("btn-jugar").addEventListener('click', iniciarJuego);
+document.getElementById("btn-reiniciar").addEventListener('click', iniciarJuego);
+
+function iniciarJuego() {
+    alert("inicio el juego");
+}
 
 // Construir el nivel UNA sola vez (no dentro de animate, que corre 60 veces por segundo)
 construirNivel();
 
 function animate(time) {
-
-    cube.rotation.x = time / 2000;
-    cube.rotation.y = time / 1000;
-
     renderer.render(scene, camera);
 
 }

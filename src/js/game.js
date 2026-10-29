@@ -240,6 +240,17 @@ document.getElementById("btn-jugar").addEventListener('click', iniciarJuego);
 document.getElementById("btn-reiniciar").addEventListener('click', iniciarJuego);
 
 
+function alternarPausa() {
+    if(estado === 'jugando'){
+        estado = 'pausa';
+        ui.pausa.classList.remove('oculto');
+    }else{
+        estado = 'jugando';
+        ui.pausa.classList.add('oculto');
+        // modificar el tiempo reloj para que se detenga.
+    }
+}
+
 // ********************************************
 // Personaje
 // ********************************************
@@ -337,6 +348,35 @@ function crearBandera(alto, colorTela) {
   grupo.userData.tela = tela;
   return grupo;
 }
+
+// ********************************************
+// ENTRADA DE TECLADO
+// ********************************************
+const teclas = {};
+window.addEventListener('keydown', (e) => {
+    teclas[e.code] = true;
+
+    // Evita que la pagina haga scroll con el espacio o las flechas
+    if(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+
+
+    // validar el salto
+
+    if(e.code === 'KeyP') alternarPausa();
+    if(e.code === 'KeyR' && estado!=='inicio') iniciarJuego();
+    if(e.code === 'Enter' && (estado==='inicio') || (estado==='gameover') || (estado==='victoria')) iniciarJuego();
+
+});
+
+window.addEventListener('keyup', (e) => {teclas[e.code] = false;});
+
+const esTeclaSalto =
+const teclaIzquierda = 
+const teclaDerecha=
+const teclaSaltoPresionado = 
+const teclaCorrer = 
+
+
 
 // ********************************************
 // Variables de juego

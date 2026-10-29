@@ -40,14 +40,15 @@ const CONFIG = {
     F Bandera de Meta
 ***************************************************** */
 const MAPA_NIVEL = [
-    "                                                                                ",
-    "                                      ooo                                       ",
-    "   #      G             ooo           ooooo                                      ",
-    "   #                   BBBBB         ooooooo                                   F ",
-    "   #                                   BBB                   S                 # ",
-    "   # P    G   G                       E                     SS                 # ",
-    "   ###  #######  #   K   #  ##C##   #####   ##B#B##       SSS                ###",
-    "################ ################ ################ ################ ################",
+  "",
+  "                                                                   ooo                               SS",
+  "          G                                                        BBB                              SSS",
+  "                              oooo                                                                 SSSS",
+  "                              BBBB                    SS   S                                      SSSSS",
+  "        GBGBG                                        SSS   SS     BGBGB          oo   GGG        SSSSSS",
+  "                    C                     C         SSSS   SSS                                  SSSSSSS",
+  "  P            E    C               E E   C    E   SSSSS   SSSS K       E E               E    SSSSSSSS   F",
+  "#########################  #############################   ######################  ###########################",
 ];
 
 const SOLIDOS = new Set(["#", "B", "G", "S", "C", "K", "F"]);
@@ -134,12 +135,32 @@ const texTierra = textureLoader.load('./src/img/texture/ground.jpg');
 const texSuelo = textureLoader.load('./src/img/texture/pasto.jpg');
 const texLadrillo = textureLoader.load('./src/img/texture/ladrillo.jpg');
 
-// CREAR EL MATERIAL
+
+
+// CREAR LOS MATERIALES
+// MeshLambertMaterial: material sencillo que reacciona a la luz.
+const matSueloLado = new THREE.MeshLambertMaterial({ map: texSueloLado });
 const MATERIALES = {
-    suelo: new THREE.MeshLambertMaterial({map: texSuelo}), 
-    tierra: new THREE.MeshLambertMaterial({map: texTierra}), 
-    ladrillo: new THREE.MeshLambertMaterial({map: texLadrillo}),    
-}
+    // Un BoxGeometry tiene 6 caras, en este orden: [+X, -X, +Y (arriba), -Y (abajo), +Z, -Z]
+    // Pasando un ARREGLO de materiales, cada cara usa uno distinto.
+    suelo: [
+        matSueloLado,
+        matSueloLado,
+        new THREE.MeshLambertMaterial({ map: texSuelo }),   // arriba: pasto
+        new THREE.MeshLambertMaterial({ map: texTierra }),  // abajo: tierra
+        matSueloLado,
+        matSueloLado,
+    ],
+    tierra:   new THREE.MeshLambertMaterial({ map: texTierraRelleno }),
+    ladrillo: new THREE.MeshLambertMaterial({ map: texLadrillo }),
+    // emissive: el bloque "brilla" un poco aunque esté en sombra
+    sorpresa: new THREE.MeshLambertMaterial({ map: texSorpresa, emissive: 0x332200 }),
+    usado:    new THREE.MeshLambertMaterial({ map: texUsado }),
+    piedra:   new THREE.MeshLambertMaterial({ map: texPiedra }),
+    columna:  new THREE.MeshLambertMaterial({ map: texColumna }),
+    // La gema no usa imagen: un color brillante se ve mejor en un objeto pequeño
+    gema:     new THREE.MeshPhongMaterial({ color: 0x26c6da, emissive: 0x0b5560, shininess: 100 }),
+};
 
 const GEO_BLOQUE = new THREE.BoxGeometry(1,1,1);
 const GEO_GEMA = new THREE.OctahedronGeometry(0.28);

@@ -315,17 +315,84 @@ scene.add(jugador.malla);
 
 
 function actualizarJugador(dt) {
-    const j = jugador;
+  const j = jugador;
 
-    // Movimiento en Horizontal
-    let direccion = 0;
-    if(teclaIzquierda()) direccion -= 1;
-    if(teclaDerecha()) direccion += 1;
+  // --- Movimiento horizontal con aceleración y fricción ---
+  let direccion = 0;
+  if (teclaIzquierda()) direccion -= 1;
+  if (teclaDerecha()) direccion += 1;
+  const velocidadMaxima = teclaCorrer() ? CONFIG.VEL_CORRER : CONFIG.VEL_CAMINAR;
 
-    const velocidadMaxima = teclaCorrer() ? CONFIG.VEL_CORRER : CONFIG.VEL_CAMINAR;
+  if (direccion !== 0) {
+    j.vx += direccion * CONFIG.ACELERACION * dt;
+    j.vx = Math.max(-velocidadMaxima, Math.min(velocidadMaxima, j.vx)); // limitar (clamp)
+    j.mirando = direccion;
+  } else {
+    // Fricción: reducimos la velocidad poco a poco hasta llegar a 0
+    const freno = CONFIG.FRICCION * dt;
+    j.vx = Math.abs(j.vx) <= freno ? 0 : j.vx - Math.sign(j.vx) * freno;
+  }
 
-    
-    
+  // --- Salto ---
+  // "Coyote time": unos milisegundos de gracia para saltar después de dejar el borde
+  j.tiempoCoyote = j.enSuelo ? CONFIG.TIEMPO_COYOTE : j.tiempoCoyote - dt;
+  j.bufferSalto -= dt;
+
+  if (j.bufferSalto > 0 && j.tiempoCoyote > 0) {
+    j.vy = CONFIG.FUERZA_SALTO;
+    j.bufferSalto = 0;
+    j.tiempoCoyote = 0;
+    j.saltando = true;
+    sonido('salto');
+  }
+
+  // Salto variable: si sueltas el botón mientras subes, el salto se corta
+  if (j.saltando && !teclaSaltoPresionada() && j.vy > 0) {
+    j.vy *= CONFIG.CORTE_SALTO;
+    j.saltando = false;
+  }
+  if (j.vy <= 0) j.saltando = false;
+
+  // --- Gravedad ---
+  j.vy += CONFIG.GRAVEDAD * dt;
+  j.vy = Math.max(j.vy, CONFIG.VEL_MAX_CAIDA);
+
+  // --- Mover y resolver colisiones ---
+  moverEntidad(j, dt, golpearBloque);
+
+  // No dejar que salga por el borde izquierdo del mundo
+  if (j.x < j.ancho / 2) { j.x = j.ancho / 2; j.vx = 0; }
+
+  // --- ¿Se cayó al vacío? ---
+  if (j.y < CONFIG.LIMITE_CAIDA) {
+    perderVida(false);
+    return;
+  }
+
+  // --- Recoger gemas ---
+  gemas.forEach(g => {
+    if (!g.recogida && seSuperponen(j, { x: g.x + 0.5, y: g.y + 0.15, ancho: 0.6, alto: 0.7 })) {
+      g.recogida = true;
+      grupoNivel.remove(g.malla);
+      sumarGema(100);
+    }
+  });
+
+  // --- Punto de control ---
+  if (puntoControl && !puntoControl.activo && j.x >= puntoControl.x) {
+    puntoControl.activo = true;
+    puntoControl.bandera.userData.tela.material.color.set(0x4caf50); // se pone verde
+    mostrarAviso('¡PUNTO DE CONTROL!');
+    sonido('vida');
+  }
+
+  // --- Meta ---
+  if (meta && j.x >= meta.x - 0.2) {
+    ganarNivel();
+  }
+
+  if (j.invulnerable > 0) j.invulnerable -= dt;
+  actualizarModeloJugador(dt);
 }
 
 // ---------- Enemigo: un "blob" morado con ojos ----------

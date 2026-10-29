@@ -521,21 +521,42 @@ function iniciarJuego() {
     ui.pausa.classList.add('oculto');
 }
 
-/**************************** 
- Game Loop 
- **************************** */
-
+// ---------- Bucle principal (game loop) ----------
+// requestAnimationFrame llama a esta función ~60 veces por segundo.
+// dt (delta time) = segundos desde el cuadro anterior. Multiplicar las
+// velocidades por dt hace que el juego vaya igual en PCs rápidos y lentos.
 const reloj = new THREE.Clock();
 
 function bucle() {
-    requestAnimationFrame(bucle);
-        
-}
+  requestAnimationFrame(bucle);
+  const dt = Math.min(reloj.getDelta(), 1 / 30);   // limitamos dt para evitar "teletransportes"
+  const tiempo = reloj.elapsedTime;
 
-bucle();
+  if (estado === 'jugando') {
+    actualizarJugador(dt);
+    actualizarEnemigos(dt);
+    tiempoRestante -= dt;
+    if (tiempoRestante <= 0) { tiempoRestante = 0; perderVida(true); }
+  } else if (estado === 'muriendo') {
+    actualizarMuerte(dt);
+  }
 
-function animate(time) {
-    renderer.render(scene, camera);
+  if (estado !== 'pausa' && grupoNivel) {
+    actualizarParticulas(dt);
+    animarNivel(dt, tiempo);
+  }
+  if (estado !== 'inicio') {
+    actualizarCamara(dt);
+    actualizarHUD();
+  } else {
+    // En la pantalla de inicio la cámara recorre el nivel lentamente
+    camara.position.x = 10 + Math.sin(tiempo * 0.2) * 6;
+    camara.position.y = 5;
+    camara.lookAt(camara.position.x, 3, 0);
+    luzSol.position.set(camara.position.x - 6, 18, 12);
+    luzSol.target.position.set(camara.position.x, 0, 0);
+  }
 
+  renderizador.render(escena, camara);
 }
 

@@ -441,8 +441,11 @@ window.addEventListener('keydown', (e) => {
     // Evita que la pagina haga scroll con el espacio o las flechas
     if(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
 
-
     // validar el salto
+    // Buffer de Salto (Solo salta al presionar, pero no mantiene el salto)
+    if(!e.repeat && esTeclaSalto(e.code) && estado==='jugando'){
+        jugador.bufferSalto = CONFIG.BUFFER_SALTO;
+    }
 
     if(e.code === 'KeyP') alternarPausa();
     if(e.code === 'KeyR' && estado!=='inicio') iniciarJuego();

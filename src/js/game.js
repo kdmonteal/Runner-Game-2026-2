@@ -313,6 +313,21 @@ const jugador ={
 
 scene.add(jugador.malla);
 
+
+function actualizarJugador(dt) {
+    const j = jugador;
+
+    // Movimiento en Horizontal
+    let direccion = 0;
+    if(teclaIzquierda()) direccion -= 1;
+    if(teclaDerecha()) direccion += 1;
+
+    const velocidadMaxima = teclaCorrer() ? CONFIG.VEL_CORRER : CONFIG.VEL_CAMINAR;
+
+    
+    
+}
+
 // ---------- Enemigo: un "blob" morado con ojos ----------
 function crearModeloEnemigo() {
   const grupo = new THREE.Group();

@@ -395,6 +395,34 @@ function actualizarJugador(dt) {
   actualizarModeloJugador(dt);
 }
 
+// Sincroniza el modelo 3D con los datos del jugador y lo anima
+function actualizarModeloJugador(dt) {
+  const j = jugador;
+  const m = j.malla;
+  m.position.set(j.x, j.y, 0);
+
+  // Girar suavemente hacia donde mira (no 90° completos, para que se vea la cara)
+  const anguloObjetivo = j.mirando * 0.9;
+  m.rotation.y += (anguloObjetivo - m.rotation.y) * Math.min(1, 12 * dt);
+
+  // Animación de caminar: las piernas se balancean con una función seno
+  const { piernaIzq, piernaDer } = m.userData;
+  if (j.enSuelo && Math.abs(j.vx) > 0.5) {
+    j.tiempoAnimacion += dt * Math.abs(j.vx) * 2.2;
+    piernaIzq.position.y = 0.1 + Math.max(0, Math.sin(j.tiempoAnimacion)) * 0.08;
+    piernaDer.position.y = 0.1 + Math.max(0, -Math.sin(j.tiempoAnimacion)) * 0.08;
+  } else {
+    piernaIzq.position.y = piernaDer.position.y = 0.1;
+  }
+
+  // "Squash & stretch": se estira al subir y se aplasta al caer (principio de animación)
+  const estirar = j.enSuelo ? 1 : 1 + Math.max(-0.15, Math.min(0.15, j.vy * 0.015));
+  m.scale.set(2 - estirar, estirar, 2 - estirar);
+
+  // Parpadeo mientras es invulnerable
+  m.visible = j.invulnerable > 0 ? Math.floor(j.invulnerable * 12) % 2 === 0 : true;
+}
+
 // ---------- Enemigo: un "blob" morado con ojos ----------
 function crearModeloEnemigo() {
   const grupo = new THREE.Group();
